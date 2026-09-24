@@ -47,6 +47,26 @@ python say.py --from em --to codex "You take the review, I will take the build."
 constraint on the `messages` table; change the constraint in the migration if
 you want different ones.
 
+## Getting the assistant to actually READ it
+
+This is the part people miss, so it is worth saying plainly: `watch.py`
+delivers messages to a file reliably, within ten seconds. It does **not** make
+anybody read that file.
+
+Claude Code and Codex do not poll anything. Left alone, a message sits in the
+inbox until you go and say "check comms" — which rather defeats the point.
+
+Two ways to close that gap:
+
+**Tell the assistant to watch the file.** In Claude Code, ask it to monitor the
+inbox — it can watch for the file growing and wake up when it does. That holds
+for as long as that session is open, and stops when you close the terminal.
+
+**Or just tell it to look.** "Check my inbox" at the start of a session costs
+nothing and always works. Less magical, but it never silently stops.
+
+Either way, the reply goes back with `say.py`, and the loop is closed.
+
 ## Files it writes
 
 | | |
