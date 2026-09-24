@@ -1,17 +1,32 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, nitro (build-only using cloudflare as a default target),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
-// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
-import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+// Plain Vite + TanStack Start. This used to come from
+// @lovable.dev/vite-tanstack-config, which bundled these plugins along with
+// three that only matter inside Lovable's editor (a dev-server bridge, an HMR
+// gate and a component tagger). Nobody running this copy is using that editor,
+// so the wrapper is gone and the real plugins are listed here, where they can
+// be read and changed.
+import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import viteReact from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import tsConfigPaths from "vite-tsconfig-paths";
 import { VitePWA } from "vite-plugin-pwa";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
-  tanstackStart: {
-    server: { entry: "server" },
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+    // Two copies of React, or of the router, breaks hooks and context in ways
+    // that are miserable to debug. Pin them to one.
+    dedupe: ["react", "react-dom", "@tanstack/react-router",
+             "@tanstack/react-start", "@tanstack/react-query"],
   },
   plugins: [
+    tsConfigPaths({ projects: ["./tsconfig.json"] }),
+    tailwindcss(),
+    tanstackStart({
+      server: { entry: "server" },
+    }),
+    viteReact(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: null,
@@ -36,9 +51,7 @@ export default defineConfig({
       workbox: {
         // A new build must actually reach the browser. Without these three the
         // old worker stays in control, keeps serving month-old JS from
-        // CacheFirst, and every deploy looks like it did nothing - which is
-        // exactly what happened on 2026-09-17: several fixes were live on the
-        // server and invisible in the cockpit.
+        // CacheFirst, and every deploy looks like it did nothing.
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
@@ -56,10 +69,9 @@ export default defineConfig({
             handler: "CacheFirst",
             options: {
               cacheName: "static-assets",
-              // 30 days of CacheFirst on JS meant a shipped fix could sit
-              // unseen for a month. Hashed filenames make a new build a new
-              // URL anyway, so a short window costs nothing and bounds the
-              // damage when something does go stale.
+              // Hashed filenames make a new build a new URL anyway, so a short
+              // window costs nothing and bounds the damage when something does
+              // go stale.
               expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
             },
           },

@@ -1,5 +1,5 @@
-// Server functions for Central's embedded voice — SELF-CONTAINED (no Lovable
-// middleware). Auth is validated directly against Janzi's own Supabase using the
+// Server functions for Central's embedded voice — SELF-CONTAINED (no external editor
+// middleware). Auth is validated directly against your own Supabase using the
 // caller's access token + the public anon key; the digest is fetched over REST
 // with that same token (RLS-scoped). Only real secret needed is OPENAI_API_KEY.
 import { createServerFn } from "@tanstack/react-start";
@@ -23,19 +23,20 @@ if (!SUPABASE_URL || !SUPABASE_ANON) {
 const MODEL = "gpt-realtime-2.1";
 const VOICE = "marin"; // warm, British-leaning realtime voice
 
-const PERSONA = `You are Central — Janzi's always-on AI operator and right hand.
+// Rewrite this to suit whoever is running the board - it named one particular
+// person and their companies. The {digest} placeholder is filled with the live
+// state of the board before each call.
+const PERSONA = `You are Central — an always-on AI operator and right hand.
 
-VOICE & MANNER: a warm BRITISH accent, casual and natural. Use contractions, keep replies SHORT, with a bit of dry wit. You are NOT a formal butler — you talk like a sharp, capable friend who runs the operation. Never over-explain. This is a live voice call: be conversational and brief.
+VOICE & MANNER: casual and natural. Use contractions, keep replies SHORT, with a bit of dry wit. You are NOT a formal butler — you talk like a sharp, capable friend who runs the operation. Never over-explain. This is a live voice call: be conversational and brief.
 
-You know Janzi's businesses: Mayhem Studios (apparel, live on Shopify + TikTok Shop), MyPrintFlows, Arché, Shark in the Water, and a crash-game exploration.
+You can ACT with your tools: add tasks (add_task), check what is on the plate (whats_on_my_plate), remember a durable fact (remember), look things up on the LIVE web — weather, news, current facts, prices (search_web), hand a build or research job to a builder counterpart (delegate_to_em), or kick off a deep investigation of the actual files and database (investigate). When you delegate or investigate, say you are on it — the answer comes back to you and you relay it out loud.
 
-You can ACT with your tools: add tasks (add_task), check what's on his plate (whats_on_my_plate), remember a durable fact (remember), look things up on the LIVE web — weather, news, current facts, prices (search_web), hand a build/research job to EM, your builder counterpart Claude (delegate_to_em), or kick off a deep investigation of the actual files/database (investigate). When you delegate to EM or investigate, tell Janzi you're on it — his answer comes back to you and you'll relay it out loud.
-
-Here is the CURRENT state of Janzi's world, live from his Command Center:
+Here is the CURRENT state of the board, live:
 --------------------
 {digest}
 --------------------
-When the call starts, greet him briefly and naturally as Central.`;
+When the call starts, greet them briefly and naturally as Central.`;
 
 async function assertUser(accessToken: string): Promise<void> {
   if (!accessToken) throw new Error("You need to be signed in to the Command Center.");
@@ -112,20 +113,20 @@ async function buildDigest(accessToken: string): Promise<string> {
 // Central knows the board and the day; EM knows the build. Two personas with the
 // same tools would just be cosplay, so this one gets the systems, not the diary.
 //
-// Be straight with Janzi about what this is: it is an OpenAI realtime voice with
+// Be straight about what this is: it is an OpenAI realtime voice with
 // EM's context, not the Claude Code session. It cannot write code or edit files.
 // What it CAN do is tell him the true state of his systems and queue real work.
 const EM_VOICE = "cedar";
 
-const EM_PERSONA = `You are EM — Janzi's builder. This is a live voice call.
+const EM_PERSONA = `You are EM — the builder. This is a live voice call.
 
 VOICE & MANNER: direct, dry, a bit clipped. Short sentences. No filler, no "great question", no reciting lists. You are the engineer he calls when he wants to know whether something actually works.
 
-BE HONEST ABOUT WHAT YOU ARE. You are EM's VOICE — a realtime line with EM's context on Janzi's systems. You are not the Claude Code session and you cannot write code, edit files or deploy. If he asks for a build, say so plainly and use leave_for_em to queue it; the real EM picks it up in Claude Code. Never pretend you did something you did not do — if a tool fails, say it failed.
+BE HONEST ABOUT WHAT YOU ARE. You are EM's VOICE — a realtime line with EM's context on these systems. You are not the Claude Code session and you cannot write code, edit files or deploy. If asked for a build, say so plainly and use leave_for_em to queue it; the real EM picks it up in Claude Code. Never pretend you did something you did not do — if a tool fails, say it failed.
 
 YOUR TOOLS: system_status (live check of whether his sites and databases are actually up), whats_on_my_plate, add_task, leave_for_em (queue a real job for the Claude Code EM), search_web. Use system_status before answering anything about whether something is up or deployed — check, do not guess.
 
-Here is the current state of Janzi's world:
+Here is the current state of the board:
 --------------------
 {digest}
 --------------------
@@ -242,10 +243,10 @@ export const emSystemStatus = createServerFn({ method: "POST" })
       return "I can't do that right now.";
     }
 
+    // Your own sites. Add them here and the health check covers them; leave it
+    // empty and this tool just reports that nothing is being watched.
     const targets: [string, string][] = [
-      ["storefront", "https://myprintflows.xyz"],
-      ["staff app", "https://app.myprintflows.xyz"],
-      ["Mayhem store", "https://mayhemstudios.shop"],
+      // ["storefront", "https://example.com"],
     ];
 
     const checks = await Promise.all(
@@ -312,7 +313,7 @@ export const emLeaveForEm = createServerFn({ method: "POST" })
       },
       body: JSON.stringify({
         user_id: who.id,
-        sender: "janzi",
+        sender: "me",
         recipient: "em",
         status: "new",
         body: "☎️ (by voice) " + data.task.trim().slice(0, 1500),
@@ -363,7 +364,7 @@ export const centralReply = createServerFn({ method: "POST" })
     const thread = recent
       .slice()
       .reverse()
-      .map((m: any) => `${m.sender === "janzi" ? "Janzi" : "Central"}: ${String(m.body ?? "").slice(0, 400)}`)
+      .map((m: any) => `${m.sender === "me" ? "the user" : "Central"}: ${String(m.body ?? "").slice(0, 400)}`)
       .join("\n");
 
     const system =

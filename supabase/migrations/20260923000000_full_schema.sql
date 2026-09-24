@@ -254,7 +254,7 @@ create policy "bus_own"
 alter table public.goals add constraint goals_pkey PRIMARY KEY (id);
 alter table public.goals add constraint goals_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.goals add constraint goals_category_check CHECK ((category = ANY (ARRAY['business'::text, 'body'::text, 'home'::text])));
-alter table public.goals add constraint goals_pile_check CHECK ((pile = ANY (ARRAY['em'::text, 'janzi'::text])));
+alter table public.goals add constraint goals_pile_check CHECK ((pile = ANY (ARRAY['em'::text, 'me'::text])));
 alter table public.goals enable row level security;
 create policy "own goals"
   on public.goals
@@ -294,8 +294,8 @@ create policy "own health runs"
   using ((auth.uid() = user_id))
   with check ((auth.uid() = user_id));
 alter table public.messages add constraint messages_pkey PRIMARY KEY (id);
-alter table public.messages add constraint messages_recipient_check CHECK ((recipient = ANY (ARRAY['janzi'::text, 'em'::text, 'codex'::text, 'central'::text])));
-alter table public.messages add constraint messages_sender_check CHECK ((sender = ANY (ARRAY['janzi'::text, 'em'::text, 'codex'::text, 'central'::text])));
+alter table public.messages add constraint messages_recipient_check CHECK ((recipient = ANY (ARRAY['me'::text, 'em'::text, 'codex'::text, 'central'::text])));
+alter table public.messages add constraint messages_sender_check CHECK ((sender = ANY (ARRAY['me'::text, 'em'::text, 'codex'::text, 'central'::text])));
 create index if not exists messages_recipient_status_idx ON public.messages USING btree (recipient, status, created_at DESC);
 alter table public.messages enable row level security;
 create policy "own messages"
@@ -339,7 +339,7 @@ alter table public.tasks add constraint tasks_pkey PRIMARY KEY (id);
 alter table public.tasks add constraint tasks_goal_id_fkey FOREIGN KEY (goal_id) REFERENCES goals(id) ON DELETE SET NULL;
 alter table public.tasks add constraint tasks_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE;
 alter table public.tasks add constraint tasks_venture_id_fkey FOREIGN KEY (venture_id) REFERENCES ventures(id) ON DELETE SET NULL;
-alter table public.tasks add constraint tasks_assigned_to_check CHECK ((assigned_to = ANY (ARRAY['janzi'::text, 'em'::text, 'codex'::text, 'central'::text])));
+alter table public.tasks add constraint tasks_assigned_to_check CHECK ((assigned_to = ANY (ARRAY['me'::text, 'em'::text, 'codex'::text, 'central'::text])));
 alter table public.tasks add constraint tasks_horizon_check CHECK ((horizon = ANY (ARRAY['today'::text, 'week'::text, 'month'::text, 'personal'::text])));
 alter table public.tasks add constraint tasks_phase_check CHECK (((phase IS NULL) OR (phase = ANY (ARRAY['dawn'::text, 'midday'::text, 'dusk'::text]))));
 alter table public.tasks add constraint tasks_pile_check CHECK ((pile = ANY (ARRAY['signal'::text, 'noise'::text])));

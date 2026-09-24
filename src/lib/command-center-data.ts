@@ -59,97 +59,14 @@ export async function loadAll(userId: string) {
 }
 
 export async function ensureSeed(userId: string) {
-  const { count } = await supabase
-    .from("goals")
-    .select("*", { count: "exact", head: true });
-  if (count && count > 0) return;
-
-  // Seed goals
-  const goalSeed = [
-    {
-      user_id: userId,
-      title: "Mayhem Studios → $2,000/mo + self-running",
-      category: "business",
-      pile: "em",
-      metric_label: "Revenue",
-      current_value: 28,
-      target_value: 2000,
-      unit: "$/mo",
-      monthly_target: "$2k + runs without me",
-      weekly_target: "ship videos + drive traffic",
-      daily_target: "1 key move",
-      sort_order: 1,
-    },
-    {
-      user_id: userId,
-      title: "Lose 45 lb · exercise · eat healthy",
-      category: "body",
-      pile: "janzi",
-      metric_label: "Weight lost",
-      current_value: 0,
-      target_value: 45,
-      unit: "lb",
-      monthly_target: "~4–8 lb",
-      weekly_target: "exercise most days",
-      daily_target: "up to 1 hr exercise + eat healthy",
-      sort_order: 2,
-    },
-    {
-      user_id: userId,
-      title: "Clean daily",
-      category: "home",
-      pile: "janzi",
-      metric_label: "Streak",
-      current_value: 0,
-      target_value: 30,
-      unit: "days",
-      monthly_target: "",
-      weekly_target: "",
-      daily_target: "~15-min reset",
-      sort_order: 3,
-    },
-  ];
-  const { data: gIns } = await supabase.from("goals").insert(goalSeed).select();
-  const goals = gIns ?? [];
-  const mayhem = goals.find((g) => g.category === "business");
-  const body = goals.find((g) => g.category === "body");
-  const home = goals.find((g) => g.category === "home");
-
-  await supabase.from("habits").insert([
-    { user_id: userId, name: "Exercise", target: "60 min", category: "body", icon: "🏃", sort_order: 1 },
-    { user_id: userId, name: "Eat healthy", target: "daily", category: "body", icon: "🥗", sort_order: 2 },
-    { user_id: userId, name: "Clean", target: "15 min", category: "home", icon: "🧹", sort_order: 3 },
-  ]);
-
-  await supabase.from("milestones").insert([
-    { user_id: userId, title: "Store live — mayhemstudios.shop", status: "hit", date_hit: "2026-06-21", goal_id: mayhem?.id ?? null, sort_order: 1 },
-    { user_id: userId, title: "First external sale (order #1002)", status: "hit", date_hit: "2026-06-14", goal_id: mayhem?.id ?? null, sort_order: 2 },
-    { user_id: userId, title: "First $1,000 in real sales", status: "upcoming", goal_id: mayhem?.id ?? null, sort_order: 3 },
-    { user_id: userId, title: "First $2,000 month", status: "upcoming", goal_id: mayhem?.id ?? null, sort_order: 4 },
-    { user_id: userId, title: "1,000 in the community", status: "upcoming", goal_id: mayhem?.id ?? null, sort_order: 5 },
-    { user_id: userId, title: "Mayhem runs without me", status: "upcoming", goal_id: mayhem?.id ?? null, sort_order: 6 },
-  ]);
-
-  await supabase.from("results").insert([
-    { user_id: userId, metric_key: "mayhem_mtd", label: "Mayhem revenue MTD", value: 28, unit: "$", goal_id: mayhem?.id ?? null, source: "seed" },
-    { user_id: userId, metric_key: "orders_total", label: "Orders total", value: 2, unit: "", goal_id: mayhem?.id ?? null, source: "seed" },
-  ]);
-
-  const today = new Date().toISOString().slice(0, 10);
-  await supabase.from("tasks").insert([
-    // Today / Signal (me)
-    { user_id: userId, title: "Approve the premium video", pile: "signal", assigned_to: "em", horizon: "today", due_date: today, goal_id: mayhem?.id ?? null, sort_order: 1 },
-    { user_id: userId, title: "Decide the first-drop offer", pile: "signal", assigned_to: "em", horizon: "today", due_date: today, goal_id: mayhem?.id ?? null, sort_order: 2 },
-    { user_id: userId, title: "Workout 60 min", pile: "signal", assigned_to: "janzi", horizon: "today", due_date: today, goal_id: body?.id ?? null, sort_order: 3 },
-    { user_id: userId, title: "Clean 15 min", pile: "signal", assigned_to: "janzi", horizon: "today", due_date: today, goal_id: home?.id ?? null, sort_order: 4 },
-    // Today / Noise (delegated)
-    { user_id: userId, title: "Draft the TikTok appeal", pile: "noise", assigned_to: "em", horizon: "today", due_date: today, goal_id: mayhem?.id ?? null, sort_order: 5 },
-    { user_id: userId, title: "Lock the conversion funnel + offer", pile: "noise", assigned_to: "em", horizon: "today", due_date: today, goal_id: mayhem?.id ?? null, sort_order: 6 },
-    { user_id: userId, title: "Produce the premium video", pile: "noise", assigned_to: "em", horizon: "today", due_date: today, goal_id: mayhem?.id ?? null, sort_order: 7 },
-    // Week
-    { user_id: userId, title: "Build Command Center", pile: "signal", assigned_to: "em", horizon: "week", goal_id: mayhem?.id ?? null, sort_order: 1 },
-    { user_id: userId, title: "Migrate PrintPal off Lovable", pile: "signal", assigned_to: "em", horizon: "week", goal_id: mayhem?.id ?? null, sort_order: 2 },
-    { user_id: userId, title: "Finish TikTok", pile: "signal", assigned_to: "em", horizon: "week", goal_id: mayhem?.id ?? null, sort_order: 3 },
-    { user_id: userId, title: "Finalize Shark logo", pile: "signal", assigned_to: "em", horizon: "week", goal_id: mayhem?.id ?? null, sort_order: 4 },
-  ]);
+  // Deliberately does nothing.
+  //
+  // This used to insert a starter board. It was dropped because it kept
+  // refilling a board somebody had just cleared, and because the examples it
+  // inserted were one particular person's goals and revenue targets - not
+  // something to ship to everyone who clones this.
+  //
+  // An empty board is the honest starting state: make your first venture, then
+  // add work under it. If you want a seed of your own, write it here.
+  void userId;
 }

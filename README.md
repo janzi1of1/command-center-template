@@ -94,6 +94,34 @@ it matches what actually runs.
 
 ---
 
+## Talking to AI assistants
+
+The **Comms** panel is a table — `messages`, with a sender, a recipient and a
+body. On its own it is a notes feed. `bridge/` is what makes it two-way:
+
+```
+you type in Comms         ->  a row is inserted
+bridge/watch.py notices   ->  appends it to "EM INBOX.md" on disk
+your assistant reads that file and replies with:
+    python bridge/say.py --from em "..."
+                          ->  a row is inserted
+the panel shows it        <-
+```
+
+So an assistant running on your machine — Claude Code, Codex, anything that can
+read a file and run a command — can read what you write on the board and answer
+you there. Point `INBOX_DIR` at the folder it works out of and it will find the
+file on its own.
+
+See `bridge/README.md`. It needs the **service** key, so it stays on your
+machine and never ships with the app.
+
+The four parties (`me`, `em`, `codex`, `central`) are fixed by a CHECK
+constraint on the `messages` table — change it in the migration if you want
+different names.
+
+---
+
 ## A word on the optional pieces
 
 Some parts of the original expect services that are not included here — a voice

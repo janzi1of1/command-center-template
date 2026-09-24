@@ -18,7 +18,7 @@ const TOOLS = [
   {
     type: "function",
     name: "add_task",
-    description: "Add a task to Janzi's Command Center board.",
+    description: "Add a task to your Command Center board.",
     parameters: {
       type: "object",
       properties: {
@@ -31,7 +31,7 @@ const TOOLS = [
   {
     type: "function",
     name: "whats_on_my_plate",
-    description: "Read Janzi's current open tasks from the board.",
+    description: "Read the current open tasks from the board.",
     parameters: { type: "object", properties: {} },
   },
   {
@@ -85,14 +85,14 @@ const EM_TOOLS = [
     type: "function",
     name: "system_status",
     description:
-      "Check LIVE whether Janzi's sites and the cockpit database are actually up. Use this before answering any question about whether something is up, live, or deployed. Never guess at status.",
+      "Check LIVE whether your sites and the cockpit database are actually up. Use this before answering any question about whether something is up, live, or deployed. Never guess at status.",
     parameters: { type: "object", properties: {} },
   },
   {
     type: "function",
     name: "leave_for_em",
     description:
-      "Queue a real build/fix job for the Claude Code EM, who can write code. Use this whenever Janzi asks for something to be built, changed, deployed or investigated in the code.",
+      "Queue a real build/fix job for the Claude Code EM, who can write code. Use this whenever you are asked for something to be built, changed, deployed or investigated in the code.",
     parameters: {
       type: "object",
       properties: { task: { type: "string" } },
@@ -147,9 +147,9 @@ export function CentralVoice({
         if (!text) continue;
         const instr =
           row.type === "investigate_result"
-            ? "Your own deep investigation just came back. Give Janzi the key finding briefly in your own voice, no preamble: " +
+            ? "Your own deep investigation just came back. Give the key finding briefly in your own voice, no preamble: " +
               text
-            : "EM — your builder counterpart (Claude) — just came back on a job you handed off. Relay this to Janzi naturally and briefly, in your own voice, no preamble: " +
+            : "EM — your builder counterpart (Claude) — just came back on a job you handed off. Relay this naturally and briefly, in your own voice, no preamble: " +
               text;
         dc.send(JSON.stringify({ type: "response.create", response: { instructions: instr } }));
       }
@@ -158,14 +158,14 @@ export function CentralVoice({
     }
   }
 
-  async function logTurn(sender: "janzi" | "em", text: string) {
+  async function logTurn(sender: "me" | "em", text: string) {
     try {
       await (supabase as any)
         .from("messages")
         .insert({
           user_id: userId,
           sender,
-          recipient: sender === "janzi" ? persona : "janzi",
+          recipient: sender === "me" ? persona : "me",
           body: "🎙️ " + text.slice(0, 1500),
           status: "handled",
         });
@@ -183,7 +183,7 @@ export function CentralVoice({
           title: String(args?.title ?? "").slice(0, 200),
           horizon: h,
           pile: "signal",
-          assigned_to: "janzi",
+          assigned_to: "me",
           due_date: h === "today" ? today() : null,
         });
         return `Added "${args?.title}" to ${h}.`;
@@ -217,7 +217,7 @@ export function CentralVoice({
       }
       if (name === "delegate_to_em") {
         // Check the write before claiming it happened. On 2026-09-16 Central
-        // told Janzi "I've handed EM a request for today's weather" and no bus
+        // told the user "I've handed EM a request for today's weather" and no bus
         // row was ever created - the success sentence was hardcoded, so it was
         // true regardless of what the database did. Confirm, or say it failed.
         const { error: busErr } = await (supabase as any).from("bus").insert({
@@ -233,7 +233,7 @@ export function CentralVoice({
         // human can actually see. A bus row nobody renders is a silent one.
         await (supabase as any).from("messages").insert({
           user_id: userId,
-          sender: "janzi",
+          sender: "me",
           recipient: "em",
           status: "new",
           body: "☎️ (via Central) " + String(args?.task ?? "").slice(0, 1500),
@@ -266,7 +266,7 @@ export function CentralVoice({
   }
 
   async function handleEvent(ev: any, dc: RTCDataChannel) {
-    // Janzi's half of every call went unsaved from 2026-07-13 to 2026-09-16 and
+    // your half of every call went unsaved from 2026-07-13 to 2026-09-16 and
     // nothing said so: the assistant transcript kept writing, so the board
     // looked alive while holding only one side. Record what the server actually
     // sends, so the next failure is readable instead of invisible.
@@ -281,7 +281,7 @@ export function CentralVoice({
     if (ev.type === "response.output_audio_transcript.done" && ev.transcript) {
       logTurn("em", ev.transcript);
     }
-    // user speech transcript → log to board as Janzi.
+    // user speech transcript → log to board as the user.
     // Event names have moved between Realtime API versions, so accept any
     // input-transcription "completed" event rather than one exact string, and
     // read the transcript from either place it has lived.
@@ -293,7 +293,7 @@ export function CentralVoice({
         ev.transcript ??
         ev.item?.content?.find((c: any) => c.transcript)?.transcript ??
         ev.item?.content?.find((c: any) => c.text)?.text;
-      if (text && String(text).trim()) logTurn("janzi", String(text).trim());
+      if (text && String(text).trim()) logTurn("me", String(text).trim());
     }
     // tool call
     if (ev.type === "response.function_call_arguments.done") {
@@ -422,7 +422,7 @@ export function CentralVoice({
     // a diagnostic on every call is noise, and noise gets ignored, which is how
     // the original bug survived two months. Root cause was a session.update
     // missing session.type:"realtime": the GA API rejected it silently, input
-    // transcription stayed off, and Janzi's half of every call vanished while
+    // transcription stayed off, and your half of every call vanished while
     // Central's kept saving, so the board looked fine.
     if (seenEvents.current.size) {
       const types = [...seenEvents.current].sort();

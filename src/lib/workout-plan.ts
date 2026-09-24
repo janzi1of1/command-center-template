@@ -1,5 +1,6 @@
 // 21-Day Military Calisthenics Plan (MadMuscles) — no equipment, at-home.
-// Transcribed from Janzi's PDF; drives the FIELD PT panel in the Command Center.
+// An example twelve-week plan; drives the FIELD PT panel. Replace it with
+// your own, or delete the panel from the board if you do not want it.
 
 export type Exercise = { name: string; scheme: string };
 export type WorkoutDay = { day: number; rest?: boolean; exercises: Exercise[] };

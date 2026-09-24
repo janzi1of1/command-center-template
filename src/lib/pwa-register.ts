@@ -1,5 +1,5 @@
 // Guarded service worker registration. Only registers in production on the
-// real published origin — never in Lovable preview, iframe, or dev.
+// real published origin — never in a preview, iframe, or dev.
 
 const SW_PATH = "/sw.js";
 

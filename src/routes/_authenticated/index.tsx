@@ -127,8 +127,8 @@ function CommandCenter() {
     queryFn: async () => {
       // ensureSeed() used to run here. It refills the board with demo goals and
       // tasks any time it finds goals empty - which made a deliberate wipe
-      // impossible: the board was cleared, Janzi opened the cockpit, and it
-      // immediately reinstated "Lose 45 lb" and friends. An empty board is now
+      // impossible: the board was cleared, the cockpit was opened, and it
+      // immediately reinstated a set of example goals. An empty board is now
       // a legitimate state. The seed stays in the codebase for a genuinely new
       // account; it just no longer fires on every load.
       return loadAll(userId!);
@@ -169,7 +169,7 @@ function CommandCenter() {
       ];
       const { error } = await (supabase as any).from("messages").insert({
         user_id: userId,
-        sender: "janzi",
+        sender: "me",
         recipient: "em",
         status: "new",
         body: lines.join(String.fromCharCode(10)),
@@ -324,7 +324,7 @@ function TopBar({
   onToggleFocus: () => void;
   onSignOut: () => void;
 }) {
-  // Eastern, not UTC. This read four hours ahead of Janzi for months.
+  // Eastern, not UTC. This read four hours ahead for months.
   const p = now ? etParts(now) : null;
   const clock = p ? `${p.hour}:${p.minute}:${p.second} ${p.dayPeriod ?? ""}`.trim() : "--:--:--";
   const date = p ? `${p.weekday} ${p.month} ${p.day} ${p.year}` : "------";
@@ -591,7 +591,7 @@ function BriefingPanel({
         <div className="p-4 sm:p-5">
         <>
         <div className="text-lg sm:text-xl font-semibold mb-4 leading-tight">
-          {greeting}, Janzi.{" "}
+          {greeting}.{" "}
           {committed
             ? `You're locked in for ${phase.toLowerCase()}.`
             : doneCount > 0
@@ -633,7 +633,7 @@ function ObjectivesPanel({
       user_id: userId,
       title: "New objective",
       category: "business",
-      pile: "janzi",
+      pile: "me",
       sort_order: active.length + 1,
       is_active: true,
     });
@@ -863,7 +863,7 @@ function PhaseBoard({
 
   // Everything belonging to this phase today - all of it. The board used to cap
   // each phase at three, which meant a day holding 32 tasks displayed 9 and hid
-  // the rest silently. Janzi's call 2026-09-22: show everything, hide nothing.
+  // the rest silently. the user's call 2026-09-22: show everything, hide nothing.
   const queued = (p: PhaseKey) =>
     tasks
       .filter((t) => {
@@ -893,7 +893,7 @@ function PhaseBoard({
         title,
         horizon: "today",
         pile: "signal",
-        assigned_to: "janzi",
+        assigned_to: "me",
         status: "todo",
         due_date: todayS,
         phase: p,
@@ -1097,7 +1097,7 @@ function ItemDialog({
   const [board, setBoard] = useState<"today" | "week" | "month" | "personal">("today");
   const [date, setDate] = useState(todayStr());
   const [time, setTime] = useState("");
-  const [who, setWho] = useState<"janzi" | "em" | "codex">("janzi");
+  const [who, setWho] = useState<"me" | "em" | "codex">("me");
   const [proj, setProj] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -1125,14 +1125,14 @@ function ItemDialog({
         setDate(task.due_date ?? todayStr());
         setTime("");
       }
-      setWho(((task as any).assigned_to as "janzi" | "em" | "codex") ?? "janzi");
+      setWho(((task as any).assigned_to as "me" | "em" | "codex") ?? "me");
       setProj(((task as any).venture_id as string | null) ?? null);
     } else {
       setTitle("");
       setBoard("today");
       setDate(todayStr());
       setTime("");
-      setWho("janzi");
+      setWho("me");
       setProj(null);
     }
   }, [open, task?.id]);
@@ -1326,9 +1326,9 @@ function ItemDialog({
             <div className="mt-1">
               <Seg
                 value={who}
-                onPick={(v) => setWho(v as "janzi" | "em" | "codex")}
+                onPick={(v) => setWho(v as "me" | "em" | "codex")}
                 options={[
-                  { v: "janzi", label: "ME" },
+                  { v: "me", label: "ME" },
                   { v: "em", label: "EM" },
                   { v: "codex", label: "CODEX" },
                 ]}
@@ -1380,7 +1380,7 @@ function ProjectBadge({ task, ventures }: { task: Task; ventures: Venture[] }) {
 
 /* ---------------- who owns it ---------------- */
 const OWNER_STYLE: Record<string, { label: string; color: string }> = {
-  janzi: { label: "ME", color: "#8c9bab" },
+  me: { label: "ME", color: "#8c9bab" },
   em: { label: "EM", color: "#38bdf8" },
   codex: { label: "CODEX", color: "#2dd4bf" },
   central: { label: "CENTRAL", color: "#8c9bab" },
@@ -1388,7 +1388,7 @@ const OWNER_STYLE: Record<string, { label: string; color: string }> = {
 
 function OwnerBadge({ task }: { task: Task }) {
   const who = (task as any).assigned_to as string | null;
-  const o = OWNER_STYLE[who ?? "janzi"];
+  const o = OWNER_STYLE[who ?? "me"];
   if (!o) return null;
   return (
     <span
@@ -1660,7 +1660,7 @@ function WeeklyBrief({ tasks, userId, ventures, onChange }: {
         title,
         horizon: "week",
         pile: "signal",
-        assigned_to: "janzi",
+        assigned_to: "me",
         status: "todo",
         due_date: weekStart,
         sort_order: rows.length + 1,
@@ -1836,7 +1836,7 @@ function MonthlyBrief({ tasks, userId, ventures, onChange }: {
         title,
         horizon: "month",
         pile: "signal",
-        assigned_to: "janzi",
+        assigned_to: "me",
         status: "todo",
         due_date: monthStart,
         sort_order: rows.length + 1,
@@ -2302,7 +2302,7 @@ function TaskRow({
   async function swapPerson() {
     const { error } = await supabase
       .from("tasks")
-      .update({ assigned_to: task.assigned_to === "em" ? "janzi" : "em" })
+      .update({ assigned_to: task.assigned_to === "em" ? "me" : "em" })
       .eq("id", task.id);
     if (error) toast.error(error.message);
     else onChange();
@@ -2399,7 +2399,7 @@ function AddTaskInline({
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [goalId, setGoalId] = useState<string>("");
-  const [person, setPerson] = useState<"em" | "janzi">("em");
+  const [person, setPerson] = useState<"em" | "me">("em");
 
   async function add() {
     if (!title.trim()) return;
@@ -2453,11 +2453,11 @@ function AddTaskInline({
         </select>
         <select
           value={person}
-          onChange={(e) => setPerson(e.target.value as "em" | "janzi")}
+          onChange={(e) => setPerson(e.target.value as "em" | "me")}
           className="bg-background border border-border rounded-sm px-2 py-1 mono text-[10px]"
         >
           <option value="em">EM</option>
-          <option value="janzi">JANZI</option>
+          <option value="me">ME</option>
         </select>
         <button
           onClick={add}
@@ -3463,7 +3463,7 @@ function CashRadarPanel({
 type EmMessage = {
   id: string;
   user_id: string;
-  sender: "janzi" | "em" | "codex" | "central";
+  sender: "me" | "em" | "codex" | "central";
   // who it is FOR. Added 2026-09-16; rows written before then default to
   // 'central', which is what they were in practice.
   recipient?: "central" | "em" | "codex";
@@ -3485,7 +3485,7 @@ function CommsPanel({ userId }: { userId: string }) {
   // was implicitly for Central and nothing recorded a recipient at all, so a
   // message for EM had nowhere to be picked up from.
   // Two real agents. The in-app assistant is not one of them - it cannot do
-  // work, and a third voice only muddied who Janzi was actually talking to.
+  // work, and a third voice only muddied who the user was actually talking to.
   const [target, setTarget] = useState<"em" | "codex">("em");
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -3522,7 +3522,7 @@ function CommsPanel({ userId }: { userId: string }) {
     queryFn: async () => {
       // Ascending + limit(100) fetched the OLDEST hundred, so once the table
       // passed 100 rows every new message landed outside the window and the
-      // feed silently froze in the past - Janzi sent messages that arrived
+      // feed silently froze in the past - the user sent messages that arrived
       // fine and never appeared. Take the newest hundred, then flip them back
       // into reading order.
       const { data } = await (supabase as any)
@@ -3573,7 +3573,7 @@ function CommsPanel({ userId }: { userId: string }) {
   }, [messages, voiceOn]);
 
   // The feed renders oldest-first inside a fixed-height scroller, so a new
-  // message lands ~100 rows below the fold. Janzi reported replies "not
+  // message lands ~100 rows below the fold. the user reported replies "not
   // arriving" when they had arrived and were simply out of view.
   useEffect(() => {
     const el = scrollRef.current;
@@ -3586,7 +3586,7 @@ function CommsPanel({ userId }: { userId: string }) {
     setSending(true);
     const { error } = await (supabase as any).from("messages").insert({
       user_id: userId,
-      sender: "janzi",
+      sender: "me",
       recipient: target,
       body,
       status: "new",
@@ -3621,7 +3621,7 @@ function CommsPanel({ userId }: { userId: string }) {
             whether the systems are actually up. EM's line is an OpenAI realtime
             voice with EM's context - NOT the Claude Code session - and it says
             so itself rather than pretending it can write code. */}
-        {/* VOICE PAUSED 2026-09-16 at Janzi's request. Text in/out with the
+        {/* VOICE PAUSED 2026-09-16 at the user's request. Text in/out with the
             two real agents gets certified first; the voice role (live research
             + hand-off, never building) is decided after that. The component and
             its server functions are intact - flip this back on by rendering it. */}
@@ -3663,15 +3663,15 @@ function CommsPanel({ userId }: { userId: string }) {
           </p>
         )}
         {messages.map((m) => {
-          // three parties at the table: Janzi, EM (Claude Code), Codex. Legacy "central" = EM.
-          const who = m.sender === "janzi" ? "janzi" : m.sender === "codex" ? "codex" : "em";
-          const label = who === "janzi" ? "JANZI" : who === "codex" ? "◉ CODEX" : "◉ EM";
-          const right = who === "janzi";
+          // three parties at the table: the user, EM (Claude Code), Codex. Legacy "central" = EM.
+          const who = m.sender === "me" ? "me" : m.sender === "codex" ? "codex" : "em";
+          const label = who === "me" ? "JANZI" : who === "codex" ? "◉ CODEX" : "◉ EM";
+          const right = who === "me";
           const bubble =
-            who === "janzi" ? "border-primary/40 bg-primary/10"
+            who === "me" ? "border-primary/40 bg-primary/10"
             : who === "codex" ? "border-accent/40 bg-accent/10"
             : "border-ok/40 bg-ok/5";
-          const labelColor = who === "janzi" ? "text-primary" : who === "codex" ? "text-accent" : "text-ok";
+          const labelColor = who === "me" ? "text-primary" : who === "codex" ? "text-accent" : "text-ok";
           return (
             <div key={m.id} className={`flex ${right ? "justify-end" : "justify-start"}`}>
               <div className={`max-w-[85%] rounded-sm border px-2.5 py-1.5 ${bubble}`}>

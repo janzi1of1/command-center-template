@@ -10,7 +10,7 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportError } from "../lib/error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { PwaInstallButton } from "@/components/pwa-install-button";
 
@@ -40,7 +40,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
@@ -92,8 +92,6 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "COMMAND CENTER" },
       { name: "twitter:description", content: "Personal mission-control: goals, tasks, habits, and results." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/db14446f-51ba-481d-9ef5-5d4eaf88f2ed/id-preview-d0eb75c6--6099bf93-83b5-4173-bb69-b61a004715f4.lovable.app-1782758261364.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/db14446f-51ba-481d-9ef5-5d4eaf88f2ed/id-preview-d0eb75c6--6099bf93-83b5-4173-bb69-b61a004715f4.lovable.app-1782758261364.png" },
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
